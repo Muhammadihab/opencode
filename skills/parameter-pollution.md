@@ -1,44 +1,49 @@
 ---
 name: parameter-pollution
-description: Api skill for: Parameter Pollution.
+description: Test parameter handling for HPP, duplicate keys, type coercion, and mass assignment — making the server read a value you shouldn't control.
 category: api
 triggers: ["parameter", "param pollution", "duplicate key", "hpp", "coercion", "type confusion"]
-status: stub
+status: active
 ---
 
-# Parameter Pollution
+# Parameter Pollution & Coercion
 
-> **STUB** — structured placeholder so the resolver loads a real file for this
-> surface. Replace the TODO sections with concrete technique. Keep the
-> frontmatter `triggers` in sync with `runtime/registry.json`.
+Front-end and back-end often parse parameters differently. Duplicate keys, type
+changes, and extra fields let you smuggle values past validation or into
+sensitive fields. A cheap, high-yield check on every write endpoint.
 
-## When this triggers
-Surfaces matching: `parameter`, `param pollution`, `duplicate key`, `hpp`, `coercion`, `type confusion`
+## Attack model
+- **Asset:** whichever value the server trusts — an ID, a role, a price, an authz flag.
+- **Authority decision:** which value does the server bind when the input is ambiguous or over-supplied?
+- **Attacker input:** duplicate params, arrays vs scalars, type mismatches, extra JSON fields.
+- **Smallest proof:** the server acts on a value you injected via the ambiguity, with a response/state diff vs the clean request.
 
-## Attack model (fill before testing)
-- **Asset / value at stake:** TODO
-- **Authority decision the server must enforce:** TODO
-- **Attacker-controlled inputs:** TODO
-- **Expected proof (smallest safe request/callback):** TODO
+## Techniques
+- **HTTP Parameter Pollution:** `?id=victim&id=me` (and the reverse). Front-end may authz the first, back-end serve the last (or concatenate). Try in query, body, and both at once.
+- **Array vs scalar:** `id=1` → `id[]=1&id[]=2`, `role=user` → `role[]=user&role[]=admin`. Some parsers take the last/first/array.
+- **Type coercion:** string vs int vs bool vs null (`"true"`, `1`, `[]`, `{}`), wrapping a scalar in an object/array to confuse validators or ORM casts.
+- **Mass assignment:** add fields the client never sends — `"role":"admin"`, `"isVerified":true`, `"ownerId":<other>`, `"price":0`, `"credits":9999` — to a write/update endpoint. Harvest field names from JS/GraphQL/responses (`js-deep-analysis`).
+- **JSON/form/multipart confusion:** send the same endpoint as JSON vs form vs multipart; duplicate keys across content types (see `request-response-analyzer`).
+- **Casing / whitespace / prefix:** `Role` vs `role`, trailing chars validators miss.
 
-## Core test checklist
-- [ ] Establish baseline (raw request + response) and save under `requests/` `responses/`.
-- [ ] Apply the primary technique for this class (TODO: list the concrete payload families).
-- [ ] Run the bypass ladder — change ONE variable at a time (identity/state, method/path,
-      parser/content-type, headers, encoding, workflow order).
-- [ ] Response-diff baseline vs attack before claiming any signal.
-- [ ] Record every variant in the tested-variant ledger (surface, variant, result, reason, next).
+## Bypass ladder
+Duplicate (query/body/both) → array vs scalar → type mismatch → extra/mass-assign fields →
+content-type switch → casing. One at a time; response-diff each against the clean baseline.
 
-## FP traps for this class
-- TODO: the common ways this class produces false positives (generic errors, redirects,
-  client-side-only reflections, WAF pages). Check `memory/FALSE_POSITIVE_DB.md`.
+## Chain targets
+Mass-assign `role` → privilege escalation. Mass-assign `ownerId` → IDOR-by-assignment.
+HPP on an authz param → access-control bypass (`access-control-testing`). Price field → business-logic.
 
-## Promotion criteria
-- OBSERVATION → LEAD: reproducible 2x.
-- LEAD → CONFIRMED: server-side effect proven, impact defined.
-- See `AGENTS.md` EXPLOITABILITY GATES for the full state machine.
+## FP traps
+- The server picks a value but it's **your own/legitimate** one → no impact.
+- An extra field accepted but **ignored** (not bound) → not mass assignment; prove it changed state.
+- A 400/validation error on the polluted request = validation working.
+- Different value echoed in the response but server state unchanged → display only.
+
+## Promotion / proof
+- CONFIRMED: the server bound an attacker-controlled value with real effect (role changed, other-owner object written, price altered), reproduced 2x, clean vs polluted requests + state saved.
+- Severity: inherits the impact it unlocks (priv-esc/IDOR/payment = P1/P2).
 
 ## References
-- Foundation: `skills/master-bugbounty-rules.md`
-- Signal engine: `prioritization.md`
-- Vuln-class memory: `memory/targets/<vuln>.md` (read first if present)
+`access-control-testing`, `idor`, `business-logic`, `request-response-analyzer`,
+`js-deep-analysis`, `api-security`; memory first.

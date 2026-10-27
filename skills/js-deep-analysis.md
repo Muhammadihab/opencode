@@ -1,44 +1,47 @@
 ---
 name: js-deep-analysis
-description: Recon skill for: Js Deep Analysis.
+description: Deep-analyze JS bundles and source maps for endpoints, hidden routes, secrets, and client logic that reveals attack surface.
 category: recon
 triggers: ["js", "javascript", "bundle", "source map", "sourcemap", "client route", "webpack"]
-status: stub
+status: active
 ---
 
-# Js Deep Analysis
+# JavaScript Deep Analysis
 
-> **STUB** — structured placeholder so the resolver loads a real file for this
-> surface. Replace the TODO sections with concrete technique. Keep the
-> frontmatter `triggers` in sync with `runtime/registry.json`.
+JS bundles are the app's map — endpoints, hidden routes, feature flags, roles,
+GraphQL operations, and sometimes secrets, all shipped to the client. Analyze
+every JS file touching the active flow **immediately**; auth/API bundles first.
+This feeds every other skill with surface.
 
-## When this triggers
-Surfaces matching: `js`, `javascript`, `bundle`, `source map`, `sourcemap`, `client route`, `webpack`
+## What to extract
+- **Endpoints & API paths:** full/relative URLs, `fetch`/`axios`/`XHR` calls, path templates, API base URLs, `/api/...`, versioned paths.
+- **Hidden/role-gated routes:** client router config (React Router, Vue Router), admin/internal routes not linked in the UI → forced-browse them (`access-control-testing`).
+- **GraphQL:** operation names, queries, mutations, fragments — recover the schema even when introspection is off (`graphql-security`).
+- **Secrets:** API keys, tokens, OAuth client IDs, cloud keys, signing secrets, hardcoded creds (`js-secret-and-api-review`). Note type + prefix; never paste full secret in shared output.
+- **Feature flags / roles / entitlements:** client-side gates that the server may not enforce (`business-logic`, `access-control-testing`).
+- **Internal URLs / hosts:** staging, internal APIs, third-party integrations, webhooks.
+- **Client-side sinks:** `innerHTML`, `eval`, `document.write`, `postMessage` handlers → DOM XSS (`dom-xss`).
 
-## Attack model (fill before testing)
-- **Asset / value at stake:** TODO
-- **Authority decision the server must enforce:** TODO
-- **Attacker-controlled inputs:** TODO
-- **Expected proof (smallest safe request/callback):** TODO
+## Technique
+- Inventory every JS file (unauthenticated first, then post-login — auth-gated bundles often hold the richest surface).
+- **Source maps:** try `.map` for each bundle (append `.map`, check `//# sourceMappingURL`, common paths); a map reconstructs original source → huge surface win.
+- Beautify/deobfuscate minified bundles; grep for the extraction targets above.
+- Diff bundles across versions/deploys for newly added endpoints.
+- For each endpoint/route found → hand to the resolver and **test it directly** (collection is never completion).
 
-## Core test checklist
-- [ ] Establish baseline (raw request + response) and save under `requests/` `responses/`.
-- [ ] Apply the primary technique for this class (TODO: list the concrete payload families).
-- [ ] Run the bypass ladder — change ONE variable at a time (identity/state, method/path,
-      parser/content-type, headers, encoding, workflow order).
-- [ ] Response-diff baseline vs attack before claiming any signal.
-- [ ] Record every variant in the tested-variant ledger (surface, variant, result, reason, next).
+## Chain targets
+Hidden route → unauth/priv-esc access. Leaked endpoint → IDOR/BOLA. Source-map leak →
+full logic → auth bypass. Client secret → direct API/cloud access.
 
-## FP traps for this class
-- TODO: the common ways this class produces false positives (generic errors, redirects,
-  client-side-only reflections, WAF pages). Check `memory/FALSE_POSITIVE_DB.md`.
+## FP traps
+- A route in the client ≠ a reachable/authorized server endpoint — verify server-side.
+- A "secret" that's a public/publishable key (e.g. Stripe `pk_`, public API keys) = not sensitive alone.
+- Dead code / commented endpoints that 404.
+- Client-side feature flag ≠ server enforcement gap until proven.
 
-## Promotion criteria
-- OBSERVATION → LEAD: reproducible 2x.
-- LEAD → CONFIRMED: server-side effect proven, impact defined.
-- See `AGENTS.md` EXPLOITABILITY GATES for the full state machine.
+## Promotion / proof
+- This is **recon** — outputs are leads, not findings. Promotion happens when a discovered surface is tested and proven by its own skill. Record every endpoint/route/secret-type in notes + mindmap with a next-action.
 
 ## References
-- Foundation: `skills/master-bugbounty-rules.md`
-- Signal engine: `prioritization.md`
-- Vuln-class memory: `memory/targets/<vuln>.md` (read first if present)
+`js-secret-and-api-review`, `graphql-security`, `dom-xss`, `access-control-testing`,
+`idor`, `endpoint-triage`; feeds the whole hunt. Auto-trigger on every in-scope JS file.

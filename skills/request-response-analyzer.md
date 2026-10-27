@@ -1,44 +1,46 @@
 ---
 name: request-response-analyzer
-description: Api skill for: Request Response Analyzer.
+description: Systematically compare baseline vs modified requests/responses to extract real signal from noise before claiming anything.
 category: api
 triggers: ["request", "response", "status diff", "body diff", "header analysis"]
-status: stub
+status: active
 ---
 
-# Request Response Analyzer
+# Request / Response Analyzer
 
-> **STUB** — structured placeholder so the resolver loads a real file for this
-> surface. Replace the TODO sections with concrete technique. Keep the
-> frontmatter `triggers` in sync with `runtime/registry.json`.
+The discipline that turns "looks interesting" into evidence. Every claimed signal
+must come from a **baseline vs attack diff** — not a single response in isolation.
+This is the validation substrate for all other skills.
 
-## When this triggers
-Surfaces matching: `request`, `response`, `status diff`, `body diff`, `header analysis`
+## Core method
+1. **Baseline:** capture the clean request + full response (status, headers, body, timing, resulting state). Save under `requests/` `responses/`.
+2. **One variable:** change exactly one thing (the attack variant).
+3. **Diff:** compare status, meaningful body, headers, timing, and server-side state — not status code alone.
+4. **Score the diff (0–4):** ignore noise (CSRF rotation, timestamps, nonces, cache artifacts, request IDs); escalate only when 2+ meaningful signals move together (see `response-diff-analysis`).
 
-## Attack model (fill before testing)
-- **Asset / value at stake:** TODO
-- **Authority decision the server must enforce:** TODO
-- **Attacker-controlled inputs:** TODO
-- **Expected proof (smallest safe request/callback):** TODO
+## What to read (not just status)
+- **Status:** 200/403/401/302/500 — but a 200 can be a denied body, a 403 can leak.
+- **Body:** length delta, new/removed fields, different object, error vs data. Mask volatile tokens before comparing (the FP hash does this — `fp_check.py`).
+- **Headers:** `Set-Cookie`, `Location`, `Content-Type`, CORS headers, cache headers, custom app headers, framework/version leaks.
+- **Timing:** only with multiple samples + a clean baseline (for blind/time-based — `sql-injection`, `command-injection`).
+- **State:** did a write actually change something? Re-fetch to confirm.
 
-## Core test checklist
-- [ ] Establish baseline (raw request + response) and save under `requests/` `responses/`.
-- [ ] Apply the primary technique for this class (TODO: list the concrete payload families).
-- [ ] Run the bypass ladder — change ONE variable at a time (identity/state, method/path,
-      parser/content-type, headers, encoding, workflow order).
-- [ ] Response-diff baseline vs attack before claiming any signal.
-- [ ] Record every variant in the tested-variant ledger (surface, variant, result, reason, next).
+## Techniques this enables
+- **Auth/authz diffs:** same request with/without token, other-user token, other role → access-control signal.
+- **Injection diffs:** boolean `1=1` vs `1=2`, payload vs benign → injection signal.
+- **Enumeration diffs:** valid vs invalid username/ID response/timing.
+- **Method/content-type diffs:** GET vs POST, JSON vs form — parser behaviour.
+- **Header reflection:** does `Host`/`X-Forwarded-*`/`Origin`/`Referer` change the response? → host-header/CORS/cache leads.
 
-## FP traps for this class
-- TODO: the common ways this class produces false positives (generic errors, redirects,
-  client-side-only reflections, WAF pages). Check `memory/FALSE_POSITIVE_DB.md`.
+## FP traps (this skill IS the FP defense)
+- Dynamic content (ads, timestamps, CSRF, A/B flags) masquerading as a signal — normalize first.
+- A WAF/error page that differs but means nothing — run `fp_check.py`.
+- Single-sample timing — never trust without repetition.
+- Reflected input mistaken for stored/server-side effect.
 
-## Promotion criteria
-- OBSERVATION → LEAD: reproducible 2x.
-- LEAD → CONFIRMED: server-side effect proven, impact defined.
-- See `AGENTS.md` EXPLOITABILITY GATES for the full state machine.
+## Output
+- For any lead: baseline pair + modified pair + the specific diff that is the signal + which noise you ruled out. This is what every finding's evidence section is built from.
 
 ## References
-- Foundation: `skills/master-bugbounty-rules.md`
-- Signal engine: `prioritization.md`
-- Vuln-class memory: `memory/targets/<vuln>.md` (read first if present)
+`response-diff-analysis`, `false-positive-filter`, `evidence-hygiene`;
+used by every injection/authz/auth skill. Run before claiming ANY signal.

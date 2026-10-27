@@ -1,44 +1,50 @@
 ---
 name: cache-poisoning
-description: Infra skill for: Cache Poisoning.
+description: Test web caches for poisoning via unkeyed inputs — storing an attacker-controlled response served to other users.
 category: infra
 triggers: ["cache", "cache poisoning", "web cache", "x-forwarded", "cache key"]
-status: stub
+status: active
 ---
 
-# Cache Poisoning
+# Web Cache Poisoning
 
-> **STUB** — structured placeholder so the resolver loads a real file for this
-> surface. Replace the TODO sections with concrete technique. Keep the
-> frontmatter `triggers` in sync with `runtime/registry.json`.
+A cache keys responses on some request parts (path, maybe query) but not others
+(certain headers). If an **unkeyed** input influences the response, you poison
+the cached copy that *other users* then receive. Test carefully — you're affecting
+shared cache; avoid poisoning production pages broadly.
 
-## When this triggers
-Surfaces matching: `cache`, `cache poisoning`, `web cache`, `x-forwarded`, `cache key`
+## Attack model
+- **Asset:** the response other users receive from the cache.
+- **Authority decision:** which request inputs are part of the cache key? Unkeyed inputs that change the response = the bug.
+- **Attacker input:** unkeyed headers (`X-Forwarded-Host`, `X-Forwarded-Scheme`, `X-Host`, custom), sometimes query params/order.
+- **Smallest proof:** a response you influenced via an unkeyed input is cached and served back on a clean request (cache HIT) — demonstrated safely on a non-critical, self-chosen cache buster.
 
-## Attack model (fill before testing)
-- **Asset / value at stake:** TODO
-- **Authority decision the server must enforce:** TODO
-- **Attacker-controlled inputs:** TODO
-- **Expected proof (smallest safe request/callback):** TODO
+## Technique
+1. **Find the cache:** `Age`, `X-Cache: HIT/MISS`, `CF-Cache-Status`, `Cache-Control`, CDN headers.
+2. **Identify unkeyed inputs:** add a cache-buster (`?cb=random`) to avoid poisoning real users; inject candidate headers (`X-Forwarded-Host: attacker.com`) and see if they reflect in the response.
+3. **Confirm keying:** does the injected value persist on a second clean request to the same buster URL (HIT)? If yes → the input is unkeyed and poisoned.
+4. **Assess impact:** reflected host → redirect/XSS/resource swap; reflected into script src → stored XSS (`xss`); reset/link poisoning (`host-header-injection`).
+5. **Cache deception** (sibling): trick the cache into storing an authenticated page (`/account/profile.css` style path confusion) → another user reads cached private data.
 
-## Core test checklist
-- [ ] Establish baseline (raw request + response) and save under `requests/` `responses/`.
-- [ ] Apply the primary technique for this class (TODO: list the concrete payload families).
-- [ ] Run the bypass ladder — change ONE variable at a time (identity/state, method/path,
-      parser/content-type, headers, encoding, workflow order).
-- [ ] Response-diff baseline vs attack before claiming any signal.
-- [ ] Record every variant in the tested-variant ledger (surface, variant, result, reason, next).
+## Safety discipline
+- Always use a unique cache-buster so you poison **your** URL, not shared production paths.
+- Don't poison high-traffic/critical endpoints. Prove the mechanism on a benign path.
+- Clean up / note TTL so entries expire.
 
-## FP traps for this class
-- TODO: the common ways this class produces false positives (generic errors, redirects,
-  client-side-only reflections, WAF pages). Check `memory/FALSE_POSITIVE_DB.md`.
+## Chain targets
+Unkeyed host → reflected XSS served to all cache users (stored-like impact). Cache deception
+→ private data exposure. Reflected script src → mass XSS.
 
-## Promotion criteria
-- OBSERVATION → LEAD: reproducible 2x.
-- LEAD → CONFIRMED: server-side effect proven, impact defined.
-- See `AGENTS.md` EXPLOITABILITY GATES for the full state machine.
+## FP traps
+- A header that reflects but is **keyed** (varies the cache) → not poisoning, each gets their own.
+- Reflection with no exploitable sink (harmless text) → informational.
+- `X-Cache: MISS` every time → not actually cached.
+- Your own buster showing your value ≠ other users affected — prove the unkeyed persistence.
+
+## Promotion / proof
+- CONFIRMED: an attacker-influenced response served from cache on a clean request (HIT) with a real sink (XSS/redirect/data), reproduced 2x, with the poisoning request + the cached clean response saved. Demonstrate on a safe buster, not production at large.
+- Severity: cache-poisoned XSS/redirect affecting users = P2; deception exposing private data = P1/P2; reflection-only = P3/P4.
 
 ## References
-- Foundation: `skills/master-bugbounty-rules.md`
-- Signal engine: `prioritization.md`
-- Vuln-class memory: `memory/targets/<vuln>.md` (read first if present)
+`host-header-injection`, `xss`, `request-response-analyzer`,
+`exploit-chain-analysis`; memory first.
