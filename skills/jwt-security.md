@@ -1,44 +1,51 @@
 ---
 name: jwt-security
-description: Auth skill for: Jwt Security.
+description: Test JWT handling for signature bypass, algorithm confusion, weak secrets, and claim tampering.
 category: auth
 triggers: ["jwt", "json web token", "alg none", "kid", "bearer token"]
-status: stub
+status: active
 ---
 
-# Jwt Security
+# JWT Security
 
-> **STUB** — structured placeholder so the resolver loads a real file for this
-> surface. Replace the TODO sections with concrete technique. Keep the
-> frontmatter `triggers` in sync with `runtime/registry.json`.
+A JWT is only as good as its signature verification. Bugs: the server accepts
+unsigned/weakly-signed tokens, confuses algorithms, or trusts tampered claims.
+Impact: forge any identity → auth bypass / privilege escalation.
 
-## When this triggers
-Surfaces matching: `jwt`, `json web token`, `alg none`, `kid`, `bearer token`
+## Attack model
+- **Asset:** the identity/claims the token asserts (user id, role, tenant, scope).
+- **Authority decision:** is this token's signature valid for a key the server trusts, and are its claims authoritative?
+- **Attacker input:** the token — header, payload, signature.
+- **Smallest proof:** a token you crafted (not legitimately issued for that identity) is accepted and authorizes a different/higher identity.
 
-## Attack model (fill before testing)
-- **Asset / value at stake:** TODO
-- **Authority decision the server must enforce:** TODO
-- **Attacker-controlled inputs:** TODO
-- **Expected proof (smallest safe request/callback):** TODO
+## Technique ladder
+1. **Decode & inspect** (don't guess): header `alg`/`kid`, payload claims (`sub`, `role`, `tenant`, `exp`, `iss`, `aud`). Base64url-decode — no key needed to read.
+2. **`alg:none`:** set header `{"alg":"none"}`, strip the signature — does the server accept it? (Classic, still found.)
+3. **Algorithm confusion (RS256→HS256):** if the server uses RS256 (public key), re-sign the token with HS256 using the *public key as the HMAC secret* — if it verifies, you can forge anything.
+4. **Weak HMAC secret:** if HS256, test a short list of common/weak secrets **offline** (never online brute on the target); if cracked, forge claims.
+5. **`kid` injection:** `kid` header feeding a path/SQL/command — path traversal to a known file used as key, or injection (see `sql-injection`, `path-traversal`).
+6. **Claim tampering:** without breaking the sig — does the server actually re-verify, or trust the payload? Flip `role`/`tenant`/`sub` and resend (catches servers that decode-without-verify).
+7. **Expiry/replay:** is `exp` enforced? Does an old/revoked token still work? Cross-account token reuse.
+8. **`jku`/`x5u`:** header pointing to a key URL → can you host your own key (SSRF-adjacent)? See `ssrf`.
 
-## Core test checklist
-- [ ] Establish baseline (raw request + response) and save under `requests/` `responses/`.
-- [ ] Apply the primary technique for this class (TODO: list the concrete payload families).
-- [ ] Run the bypass ladder — change ONE variable at a time (identity/state, method/path,
-      parser/content-type, headers, encoding, workflow order).
-- [ ] Response-diff baseline vs attack before claiming any signal.
-- [ ] Record every variant in the tested-variant ledger (surface, variant, result, reason, next).
+## Bypass ladder
+alg none → alg confusion → weak secret (offline) → kid injection → claim-trust test →
+jku/x5u key injection → expiry/replay. One at a time; keep every crafted token.
 
-## FP traps for this class
-- TODO: the common ways this class produces false positives (generic errors, redirects,
-  client-side-only reflections, WAF pages). Check `memory/FALSE_POSITIVE_DB.md`.
+## Chain targets
+Forge `role:admin` → admin takeover. Forge `sub` → full ATO. `jku` → SSRF. Weak secret →
+mint tokens for any user.
 
-## Promotion criteria
-- OBSERVATION → LEAD: reproducible 2x.
-- LEAD → CONFIRMED: server-side effect proven, impact defined.
-- See `AGENTS.md` EXPLOITABILITY GATES for the full state machine.
+## FP traps
+- Decoding a token proves nothing — anyone can read it. The bug is **acceptance** of a crafted one.
+- The server rejecting `alg:none` / tampered claims = secure.
+- Cracking a secret offline that's actually strong = you didn't crack it; verify the forged token is accepted.
+- An expired token still "working" on a cached/static endpoint ≠ auth bypass.
+
+## Promotion / proof
+- CONFIRMED: a token you forged (different/elevated identity) is accepted for an authenticated action, reproduced 2x, with the crafted token + the authorized response saved. Never use real secrets you shouldn't have.
+- Severity: forge-any-identity / role = P1; replay/expiry gaps = P2/P3 per impact.
 
 ## References
-- Foundation: `skills/master-bugbounty-rules.md`
-- Signal engine: `prioritization.md`
-- Vuln-class memory: `memory/targets/<vuln>.md` (read first if present)
+`auth-bypass`, `session-management`, `oauth-oidc-security`, `ssrf` (jku),
+`path-traversal` (kid), `access-control-testing`; memory first.

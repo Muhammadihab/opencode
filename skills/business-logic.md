@@ -1,44 +1,50 @@
 ---
 name: business-logic
-description: Realtime skill for: Business Logic.
+description: Test workflow and business-rule enforcement — abusing intended functionality (pricing, limits, state, approvals) for unintended gain.
 category: realtime
 triggers: ["business logic", "workflow", "coupon", "discount", "approval", "quota", "trial", "credit"]
-status: stub
+status: active
 ---
 
-# Business Logic
+# Business Logic Abuse
 
-> **STUB** — structured placeholder so the resolver loads a real file for this
-> surface. Replace the TODO sections with concrete technique. Keep the
-> frontmatter `triggers` in sync with `runtime/registry.json`.
+No payload — you abuse *intended* features by breaking the assumptions behind
+them: negative quantities, skipped steps, replayed approvals, client-trusted
+prices. The scanner can't find these; you need to understand what the app is
+*for* (see `business-context-analysis`).
 
-## When this triggers
-Surfaces matching: `business logic`, `workflow`, `coupon`, `discount`, `approval`, `quota`, `trial`, `credit`
+## Attack model
+- **Asset:** money, credits, quota, trust decisions, workflow integrity.
+- **Authority decision:** does the server enforce the business rule, or trust the client/sequence?
+- **Attacker input:** values, quantities, step order, state transitions, repeated actions.
+- **Smallest proof:** you obtain value or a state the rules shouldn't allow, shown by before/after.
 
-## Attack model (fill before testing)
-- **Asset / value at stake:** TODO
-- **Authority decision the server must enforce:** TODO
-- **Attacker-controlled inputs:** TODO
-- **Expected proof (smallest safe request/callback):** TODO
+## Patterns to test
+- **Price/amount tampering:** change price, total, currency, or quantity in the request — is it recomputed server-side? Negative quantity → refund/credit. Negative/zero price.
+- **Coupon/discount abuse:** stack coupons, reuse single-use (also a race — `race-conditions`), apply after total, expired code still honored, coupon on already-discounted.
+- **Quota/limit bypass:** exceed plan limits, seats, API quota, trial length; reset trial by re-signup/param.
+- **Workflow skipping:** jump to a later step (payment → fulfillment without paying), skip approval, reach "completed" state directly.
+- **Approval/replay:** replay a one-time approval token; approve your own request; self-approve where two parties required.
+- **Refund/cancellation logic:** refund more than paid, cancel-after-use, keep goods + refund.
+- **Currency/rounding:** rounding in your favor at scale, currency mismatch.
+- **Integer/parameter edge:** very large/negative/zero/overflow values in quantities, dates, IDs.
 
-## Core test checklist
-- [ ] Establish baseline (raw request + response) and save under `requests/` `responses/`.
-- [ ] Apply the primary technique for this class (TODO: list the concrete payload families).
-- [ ] Run the bypass ladder — change ONE variable at a time (identity/state, method/path,
-      parser/content-type, headers, encoding, workflow order).
-- [ ] Response-diff baseline vs attack before claiming any signal.
-- [ ] Record every variant in the tested-variant ledger (surface, variant, result, reason, next).
+## Technique
+- Map the money/identity/workflow paths first (`business-context-analysis`).
+- For each, ask "what does the server *assume* here?" then break that one assumption.
+- Always prove **server-side state change**, not a UI display change.
+- One assumption at a time; capture before/after.
 
-## FP traps for this class
-- TODO: the common ways this class produces false positives (generic errors, redirects,
-  client-side-only reflections, WAF pages). Check `memory/FALSE_POSITIVE_DB.md`.
+## FP traps
+- A price change in the request that the server **recomputes** (ignores your value) = secure.
+- UI shows a discount but the charged amount is correct → display-only, not a bug.
+- "Free" access to something actually free/public.
+- A limit you exceeded that resets legitimately.
 
-## Promotion criteria
-- OBSERVATION → LEAD: reproducible 2x.
-- LEAD → CONFIRMED: server-side effect proven, impact defined.
-- See `AGENTS.md` EXPLOITABILITY GATES for the full state machine.
+## Promotion / proof
+- CONFIRMED: value obtained / rule broken with server-side effect, reproduced 2x, before/after state + requests saved. Quantify ("paid $0 for a $50 item", "trial extended indefinitely via param").
+- Severity: payment/credit/quota abuse with real impact = P1/P2; minor logic quirk = P3.
 
 ## References
-- Foundation: `skills/master-bugbounty-rules.md`
-- Signal engine: `prioritization.md`
-- Vuln-class memory: `memory/targets/<vuln>.md` (read first if present)
+`business-context-analysis`, `race-conditions`, `payments-security`,
+`access-control-testing`, `parameter-pollution`; memory first.
