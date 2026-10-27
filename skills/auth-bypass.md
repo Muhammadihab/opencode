@@ -1,44 +1,63 @@
 ---
 name: auth-bypass
-description: Auth skill for: Auth Bypass.
+description: Test authentication flows (login, registration, session) for bypasses, logic flaws, and takeover preconditions.
 category: auth
 triggers: ["login", "auth", "authentication", "signin", "sign in", "register", "signup", "bypass"]
-status: stub
+status: active
 ---
 
-# Auth Bypass
+# Authentication Bypass & Logic
 
-> **STUB** — structured placeholder so the resolver loads a real file for this
-> surface. Replace the TODO sections with concrete technique. Keep the
-> frontmatter `triggers` in sync with `runtime/registry.json`.
+Auth bugs live in the **edges**: recovery, fallback, alternate flows, state
+transitions — not the happy path. Use ONLY the owned account from `login.md`;
+read OTPs/links from its inbox. Never brute-force, never touch third-party accounts.
 
-## When this triggers
-Surfaces matching: `login`, `auth`, `authentication`, `signin`, `sign in`, `register`, `signup`, `bypass`
+## Attack model
+- **Asset:** the identity boundary — becoming someone else, or authenticated without valid credentials.
+- **Authority decision:** did this request prove possession of valid credentials / a valid session for *this* identity?
+- **Attacker input:** credentials, tokens, session artifacts, the flow's step order.
+- **Smallest proof:** reaching an authenticated response/action without completing legitimate auth, shown by a raw request + the authenticated body.
 
-## Attack model (fill before testing)
-- **Asset / value at stake:** TODO
-- **Authority decision the server must enforce:** TODO
-- **Attacker-controlled inputs:** TODO
-- **Expected proof (smallest safe request/callback):** TODO
+## Surfaces & techniques
 
-## Core test checklist
-- [ ] Establish baseline (raw request + response) and save under `requests/` `responses/`.
-- [ ] Apply the primary technique for this class (TODO: list the concrete payload families).
-- [ ] Run the bypass ladder — change ONE variable at a time (identity/state, method/path,
-      parser/content-type, headers, encoding, workflow order).
-- [ ] Response-diff baseline vs attack before claiming any signal.
-- [ ] Record every variant in the tested-variant ledger (surface, variant, result, reason, next).
+### Login logic
+- **Response/flow confusion:** does a failed login still set a session cookie or return a token? Compare success vs failure response-diff.
+- **Forced browsing:** request a post-login page/endpoint directly with no/partial session — is it served?
+- **SQLi (low-impact only on login):** `' OR '1'='1' -- ` style as a *logic* probe, single careful attempts, documented — not a credential list. See `sql-injection`.
+- **Account enumeration:** different response/timing for valid vs invalid username (feeds other attacks; P3 alone).
+- **Password/username case & unicode:** `Admin` vs `admin`, trailing space, unicode normalization collisions.
 
-## FP traps for this class
-- TODO: the common ways this class produces false positives (generic errors, redirects,
-  client-side-only reflections, WAF pages). Check `memory/FALSE_POSITIVE_DB.md`.
+### Session & tokens (see `session-management`, `jwt-security`)
+- Session fixation: does the pre-login session ID survive login? Reuse after logout?
+- Token in predictable/forgeable form; missing expiry; reuse across accounts.
+- Cookie flags (HttpOnly/Secure/SameSite) — note but don't over-rate without impact.
 
-## Promotion criteria
-- OBSERVATION → LEAD: reproducible 2x.
-- LEAD → CONFIRMED: server-side effect proven, impact defined.
-- See `AGENTS.md` EXPLOITABILITY GATES for the full state machine.
+### Registration
+- Register an existing email (collision → takeover precondition).
+- Skip email verification: is the account usable before verifying? Can you change email post-verify without re-verifying?
+- Mass-assign role/privilege fields at signup (`"role":"admin"`, `"isVerified":true`). See `access-control-testing`.
+
+### Multi-step / MFA / recovery (see `forgot-password`, `rate-limiting`)
+- Skip or reorder steps (go straight to step 3's endpoint).
+- Replay a one-time token; use a token issued for A on B's flow.
+- MFA: is the post-password-pre-MFA state already authenticated for any endpoint?
+
+## Bypass ladder
+Identity/state (fresh vs stale session, second owned account) → method/path (force-browse,
+HTTP method swap) → parser (duplicate params, token in header vs body) → workflow
+(skip/reorder/replay steps) → platform variants (mobile API, legacy `/v1/` login, SSO vs
+password path).
+
+## FP traps
+- A set-cookie on failure that is **not** a valid session (test if it actually authorizes anything).
+- "Bypass" that only works with credentials you legitimately hold (self — not a bug).
+- Enumeration from a generic timing difference under noise — need stable, repeated signal.
+- Reaching a page that then redirects to login = not bypassed.
+
+## Promotion / proof
+- CONFIRMED: an authenticated action/data obtained without valid auth for that identity, raw request saved, reproduced 2x. Registration/collision bugs: show the takeover precondition concretely.
+- Severity: full auth bypass / ATO = P1; enumeration or weak cookie flags alone = P3/P4.
 
 ## References
-- Foundation: `skills/master-bugbounty-rules.md`
-- Signal engine: `prioritization.md`
-- Vuln-class memory: `memory/targets/<vuln>.md` (read first if present)
+`session-management`, `jwt-security`, `forgot-password`, `rate-limiting`,
+`oauth-oidc-security`, `access-control-testing`; `owned-account` discipline; memory first.

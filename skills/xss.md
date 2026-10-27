@@ -1,44 +1,58 @@
 ---
 name: xss
-description: Client skill for: Xss.
+description: Test for reflected and stored XSS — attacker JavaScript executing in another user's authenticated browser context.
 category: client
 triggers: ["xss", "reflected", "stored xss", "script injection", "html injection", "innerhtml"]
-status: stub
+status: active
 ---
 
-# Xss
+# XSS (Cross-Site Scripting)
 
-> **STUB** — structured placeholder so the resolver loads a real file for this
-> surface. Replace the TODO sections with concrete technique. Keep the
-> frontmatter `triggers` in sync with `runtime/registry.json`.
+Impact is **script execution in a victim's authenticated context**, not reflection.
+A payload that echoes but doesn't execute is HTML injection at most. Stored >
+reflected; admin/support-viewed stored XSS is the prize.
 
-## When this triggers
-Surfaces matching: `xss`, `reflected`, `stored xss`, `script injection`, `html injection`, `innerhtml`
+## Attack model
+- **Asset:** the victim's session/DOM — their cookies, tokens, actions, in *their* browser.
+- **Authority decision:** should attacker-supplied content become executable markup in another user's page? Never.
+- **Attacker input:** any field that ends up rendered — forms, params, headers (Referer/UA reflected), filenames, markdown, JSON shown in a template.
+- **Smallest proof:** controlled JS executes (`alert`/`console`/a DOM change/a beacon) in a context you don't control — ideally demonstrated as victim, not self.
 
-## Attack model (fill before testing)
-- **Asset / value at stake:** TODO
-- **Authority decision the server must enforce:** TODO
-- **Attacker-controlled inputs:** TODO
-- **Expected proof (smallest safe request/callback):** TODO
+## Find the sink first (don't spray payloads)
+- **Reflected:** inject a unique marker (`zqx123`) in each param/header; find where it lands in the response. Note the **context**: HTML body, attribute, `<script>`, URL, CSS, JSON.
+- **Stored:** submit the marker; find every place it's later rendered (profile shown to admins, comments, logs, exports, support dashboards). Stored XSS into an admin view is high-value.
+- **DOM:** see `dom-xss` — source (`location.hash`, `postMessage`) → sink (`innerHTML`, `eval`, `document.write`). Read JS with `js-deep-analysis`.
 
-## Core test checklist
-- [ ] Establish baseline (raw request + response) and save under `requests/` `responses/`.
-- [ ] Apply the primary technique for this class (TODO: list the concrete payload families).
-- [ ] Run the bypass ladder — change ONE variable at a time (identity/state, method/path,
-      parser/content-type, headers, encoding, workflow order).
-- [ ] Response-diff baseline vs attack before claiming any signal.
-- [ ] Record every variant in the tested-variant ledger (surface, variant, result, reason, next).
+## Context-driven payloads (match the sink)
+- **HTML body:** `<svg onload=alert(1)>`, `<img src=x onerror=alert(1)>`.
+- **Attribute:** break out — `" onmouseover=alert(1) x="`, `'><svg onload=alert(1)>`.
+- **Inside `<script>`:** `';alert(1);//` or `</script><svg onload=alert(1)>`.
+- **URL/href:** `javascript:alert(1)` (test if scheme survives).
+- **Markdown/rich text:** `[x](javascript:alert(1))`, raw HTML if allowed, `onerror` in embedded img.
+- **Polyglot** (when context unknown): `jaVasСript:/*-/*`/*\`/*'/*"/**/(/* */oNcliCk=alert() )//` style — then narrow once you see which context breaks.
 
-## FP traps for this class
-- TODO: the common ways this class produces false positives (generic errors, redirects,
-  client-side-only reflections, WAF pages). Check `memory/FALSE_POSITIVE_DB.md`.
+## WAF / filter bypass ladder (see `waf-bypass`)
+Case toggling (`<ScRiPt>`), encoding (HTML entity, URL, double-URL, unicode), event-handler
+swaps (`onload`→`onpointerover`), tag swaps, no-space tricks (`/` as separator),
+null bytes, split across attributes, alternative tags (`<details open ontoggle=>`).
+Change one encoding family at a time; log every variant.
 
-## Promotion criteria
-- OBSERVATION → LEAD: reproducible 2x.
-- LEAD → CONFIRMED: server-side effect proven, impact defined.
-- See `AGENTS.md` EXPLOITABILITY GATES for the full state machine.
+## Chain targets
+Stored XSS in admin/support view → **session/token theft → admin takeover** (P2→P1).
+XSS → CSRF-token exfil → state change. XSS + weak CSP → full page control.
+Self-XSS alone is **not** a finding (kill condition) unless chained to a delivery vector.
+
+## FP traps
+- **Reflection without execution** — marker appears but is HTML-encoded. Verify it actually runs.
+- **Self-XSS** — only you can trigger it, no delivery to a victim → not reportable alone.
+- **Executes only in a broken/old browser** or requires unrealistic interaction → downgrade.
+- **CSP blocks execution** — if a strict CSP stops the payload, note it; the injection may still be HTML injection, not XSS.
+- `alert(document.domain)` on `about:blank`/sandbox ≠ on the real origin — prove the origin.
+
+## Promotion / proof
+- CONFIRMED: JS executes in the target origin, reproduced 2x, with the raw injected request/stored value and a screenshot (support only) + the executing context noted. For stored, state *who* renders it (self vs other users vs admins).
+- Severity: stored/admin-context = P2; reflected-with-execution = P3 unless chained; self/HTML-only = P4.
 
 ## References
-- Foundation: `skills/master-bugbounty-rules.md`
-- Signal engine: `prioritization.md`
-- Vuln-class memory: `memory/targets/<vuln>.md` (read first if present)
+`dom-xss`, `content-security` (CSP), `waf-bypass`, `js-deep-analysis`,
+`session-management`, `exploit-chain-analysis`; memory first.

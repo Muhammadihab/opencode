@@ -2,7 +2,7 @@
 import json
 import os
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'memory', 'learning.db')
 SIGNALS_PATH = os.path.join(os.path.dirname(__file__), 'signals.json')
@@ -64,7 +64,7 @@ class LearningEngine:
         conn = sqlite3.connect(self.db_path)
         cur = conn.cursor()
         cur.execute("INSERT INTO findings (target, endpoint, vulnerability_class, signals, validation_state, source_provenance, created_at) VALUES (?,?,?,?,?,?,?)",
-                    (target, endpoint, vulnerability_class, json.dumps(signals), validation_state, source_provenance or "", datetime.utcnow().isoformat()))
+                    (target, endpoint, vulnerability_class, json.dumps(signals), validation_state, source_provenance or "", datetime.now(timezone.utc).isoformat()))
         fid = cur.lastrowid
         conn.commit()
         conn.close()
@@ -79,7 +79,7 @@ class LearningEngine:
         conn = sqlite3.connect(self.db_path)
         cur = conn.cursor()
         cur.execute("INSERT INTO triage (finding_id, feedback_type, notes, provenance, created_at) VALUES (?,?,?,?,?)",
-                    (finding_id, feedback_type, notes, provenance or "", datetime.utcnow().isoformat()))
+                    (finding_id, feedback_type, notes, provenance or "", datetime.now(timezone.utc).isoformat()))
         tid = cur.lastrowid
         conn.commit()
         conn.close()
