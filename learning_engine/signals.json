@@ -1,0 +1,12 @@
+{
+  "weights": {
+    "auth": 0.9,
+    "idor": 0.8,
+    "ssrf": 0.9,
+    "xss": 0.7,
+    "rce": 1.0
+  },
+  "thresholds": {
+    "p1": 0.8
+  }
+}

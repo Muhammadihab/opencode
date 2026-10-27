@@ -1,0 +1,11 @@
+Title: GraphQL BOLA on User Object
+Source: sample
+Date: 2025-02-01
+Entry point: /graphql
+Precondition: Authenticated low-priv user
+Trust boundary: Resolver ownership check
+Bypass: Missing ownership validation
+Proof method: Query other user ID
+FP trap: Public resolver by design
+Chain opportunity: Data exposure + enumeration
+Tags: graphql, bola, idor

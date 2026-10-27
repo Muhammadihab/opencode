@@ -1,0 +1,11 @@
+Title: Password Reset Token Leakage via Referer
+Source: sample
+Date: 2025-01-01
+Entry point: /forgot-password
+Precondition: Email delivery available
+Trust boundary: Email -> Browser Referer
+Bypass: Third-party analytics captured reset token
+Proof method: HTTP Referer leakage
+FP trap: May be intentional; check third-party inclusion
+Chain opportunity: Email control -> ATO
+Tags: reset, referer, leak, ato

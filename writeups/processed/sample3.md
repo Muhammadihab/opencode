@@ -1,0 +1,13 @@
+# Processed
+
+Title: SSRF via PDF Export to Metadata
+Source: sample
+Date: 2025-03-01
+Entry point: /export/pdf
+Precondition: Authenticated user
+Trust boundary: Internal network fetch
+Bypass: URL fetcher allows internal IPs
+Proof method: OOB/callback or metadata response
+FP trap: Outbound blocked by firewall
+Chain opportunity: Credential exposure from metadata
+Tags: ssrf, pdf, metadata, chain

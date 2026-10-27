@@ -1,0 +1,10 @@
+node_modules/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.db
+login.md
+auth_session.md
+js_cookies.txt
+testing/
+logs/

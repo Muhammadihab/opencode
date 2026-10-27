@@ -1,0 +1,19 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install deps
+        run: pip install pytest
+      - name: Run tests
+        run: python -m pytest scripts/ learning_engine/tests/ tests/ -v
+      - name: Registry contract check
+        run: python scripts/skill_registry.py check
