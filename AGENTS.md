@@ -98,7 +98,7 @@ Notes-first: document under `testing/<root-domain>/<subdomain>/notes/` as you go
 
 # CONTEXT & SESSION BUDGETS (circuit breakers)
 
-- **Time budgets.** 15 min per low-signal surface (document, pivot); 60 min per P1/P2 surface.
+- **Time budgets.** Per-surface budgets are keyed to priority and defined canonically in `prioritization.md` (P1 60–120 min, P2 30–60, P3 10–15, P4 ≤10). Don't use a flat number; look up the surface's priority. BOOT stays < 5 min.
 - **Call budgets.** 50 tool calls per surface.
 - **Rate limiting.** 5 consecutive 403/429 → 60s backoff → circuit-break.
 - **No-progress.** No-progress detection (5 identical calls → change one variable or pivot).
@@ -109,5 +109,5 @@ Notes-first: document under `testing/<root-domain>/<subdomain>/notes/` as you go
 
 - **Exploit-first.** Exploit-first: discovery is minimum-viable input; once a usable surface exists, stop collecting, resolve skills, test it. Recon and exploitation run interleaved.
 - **BOOT (<5 min).** BOOT (<5 min): lock scope, quick tech fingerprint, check prior data in `testing/`, load foundations, bootstrap note, READY TO HUNT.
-- **SURFACE DISCOVERY ↔ EXPLOIT.** SURFACE DISCOVERY ↔ EXPLOIT: passive recon + JS deep analysis + tech-aware fuzzing feeding direct testing; skill trigger → attack model → test → bypass ladder → document → next surface. 10-15 min no signal → mark low-yield, pivot.
+- **SURFACE DISCOVERY ↔ EXPLOIT.** SURFACE DISCOVERY ↔ EXPLOIT: passive recon + JS deep analysis + tech-aware fuzzing feeding direct testing; skill trigger → attack model → test → bypass ladder → document → next surface. No signal within the surface's priority budget (`prioritization.md`) → mark low-yield, pivot.
 - **REPORT (gated by user).** REPORT (gated by user): FP gate → FP filter → severity calibration → rank by exploitability → structured summary in notes. No PoCs/reports until asked.

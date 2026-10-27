@@ -58,7 +58,7 @@ Answer these for every credible lead:
 - [ ] **If missing:** Classify as lead, low-confidence observation, informational, or FP until safe evidence closes the gap.
 
 ## 7. WHEN TO MOVE ON
-- [ ] **Time-box:** No high-signal leads after 20-30 min of structured testing: document what was tested + where saved, mark the surface low-priority with the reason, pivot to a higher-signal surface.
+- [ ] **Time-box:** No high-signal leads within the surface's priority time budget (see `prioritization.md`: P1 60-120, P2 30-60, P3 10-15, P4 <=10 min): document what was tested + where saved, mark the surface low-priority with the reason, pivot to a higher-signal surface.
 - [ ] **Never over-invest:** Never over-invest in noisy surfaces unless new evidence raises impact potential.
 
 ## 8. SEVERITY FRAMING

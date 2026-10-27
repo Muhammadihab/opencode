@@ -1,44 +1,50 @@
 ---
 name: file-upload
-description: Injection skill for: File Upload.
+description: Test file upload/import features for unrestricted upload, stored XSS, SSRF/XXE via parsers, and path traversal.
 category: injection
 triggers: ["upload", "file upload", "multipart", "content-type", "polyglot file", "svg"]
-status: stub
+status: active
 ---
 
-# File Upload
+# File Upload & Import
 
-> **STUB** — structured placeholder so the resolver loads a real file for this
-> surface. Replace the TODO sections with concrete technique. Keep the
-> frontmatter `triggers` in sync with `runtime/registry.json`.
+Upload bugs are rarely "upload a webshell" on modern stacks — the wins are
+**stored XSS (SVG/HTML)**, **SSRF/XXE via parsers**, **path traversal in the
+filename**, and **content-type confusion**. Map what the server *does* with the
+file (store, render, parse, convert, fetch).
 
-## When this triggers
-Surfaces matching: `upload`, `file upload`, `multipart`, `content-type`, `polyglot file`, `svg`
+## Attack model
+- **Asset:** code execution context, other users' browsers (served files), internal network (parsers), the filesystem.
+- **Authority decision:** should this file type/content/path/location be accepted and served/parsed as-is?
+- **Attacker input:** file content, filename, extension, MIME/`Content-Type`, magic bytes, and any URL the importer fetches.
+- **Smallest proof:** the server stores/serves/parses the file in a way that executes attacker intent (XSS fires, parser calls out, file lands outside its dir).
 
-## Attack model (fill before testing)
-- **Asset / value at stake:** TODO
-- **Authority decision the server must enforce:** TODO
-- **Attacker-controlled inputs:** TODO
-- **Expected proof (smallest safe request/callback):** TODO
+## Test matrix
+- **Extension / type bypass:** double ext (`shell.php.jpg`), case (`.PhP`), trailing dot/space/null (`x.php%00.jpg`), uncommon exts the handler maps, `Content-Type` mismatch (declare `image/png`, send HTML), magic-byte prefix + real payload.
+- **Stored XSS via SVG/HTML:** upload an `.svg` containing `<script>`/`onload`; if served inline (not `Content-Disposition: attachment`) on the app origin → stored XSS (see `xss`, `content-security`). Also HTML files, `.xml`, polyglots.
+- **XXE via parsed formats:** `.svg`, `.docx`/`.xlsx` (zip of XML), `.xml` imports — external entity to your Collaborator (see `xxe`, `blind-vuln`).
+- **SSRF via importers:** "import from URL", avatar-from-URL, remote-document — point at internal/metadata (see `ssrf`).
+- **Path traversal in filename:** `../../../x`, encoded, to write/read outside the upload dir. Confirm where the file lands.
+- **Image/doc conversion:** ImageMagick/ffmpeg/ghostscript/LibreOffice backends have known RCE/SSRF classes — probe safely, don't run destructive payloads.
+- **Serving origin:** is the file served from the app origin (XSS-relevant) or a sandboxed/CDN origin (reduces XSS)? Check.
 
-## Core test checklist
-- [ ] Establish baseline (raw request + response) and save under `requests/` `responses/`.
-- [ ] Apply the primary technique for this class (TODO: list the concrete payload families).
-- [ ] Run the bypass ladder — change ONE variable at a time (identity/state, method/path,
-      parser/content-type, headers, encoding, workflow order).
-- [ ] Response-diff baseline vs attack before claiming any signal.
-- [ ] Record every variant in the tested-variant ledger (surface, variant, result, reason, next).
+## Bypass ladder
+Extension → MIME → magic bytes → parser type → filename path → serving origin →
+import-URL destination. One variable at a time; log each in the variant ledger.
 
-## FP traps for this class
-- TODO: the common ways this class produces false positives (generic errors, redirects,
-  client-side-only reflections, WAF pages). Check `memory/FALSE_POSITIVE_DB.md`.
+## Chain targets
+SVG stored XSS in admin view → admin takeover. XXE → SSRF/file read. Import-URL →
+internal SSRF → metadata creds. Traversal write → overwrite config.
 
-## Promotion criteria
-- OBSERVATION → LEAD: reproducible 2x.
-- LEAD → CONFIRMED: server-side effect proven, impact defined.
-- See `AGENTS.md` EXPLOITABILITY GATES for the full state machine.
+## FP traps
+- File **accepted** but served as `attachment`/`text/plain` from a sandbox origin → no XSS; note it, don't claim.
+- Upload "succeeds" but server re-encodes the image (strips payload) → payload gone.
+- A parser error ≠ XXE/SSRF — need the callback/side-effect.
+- Being able to upload a benign file is not a finding.
+
+## Promotion / proof
+- CONFIRMED: the executed effect, reproduced 2x — XSS firing on the app origin (screenshot + stored value), parser callback with your marker, or the file read/written where it shouldn't be. Save the raw upload request + the serve/render response.
+- Severity: stored XSS/parser-SSRF/traversal with impact = P2–P1 per effect; benign accept = P4.
 
 ## References
-- Foundation: `skills/master-bugbounty-rules.md`
-- Signal engine: `prioritization.md`
-- Vuln-class memory: `memory/targets/<vuln>.md` (read first if present)
+`xss`, `xxe`, `ssrf`, `content-security`, `path-traversal`, `blind-vuln`; memory first.

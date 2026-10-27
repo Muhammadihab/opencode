@@ -183,7 +183,7 @@ Reproducible raw HTTP proving server-side impact; no physical access/social engi
 | Memory model | Comprehensive ledger + summaries + variant ledger | Lightweight P1/P2 |
 | Parameter testing | Systematic all vectors | High-signal only |
 | Finding validation | FP DB + replay 2x + response-diff + FP GATE | Self-validated |
-| Time per surface | 10-15 min exhaust bypass families | 10-15 max skip P4 |
+| Time per surface | Priority budget (prioritization.md): P1 60-120, P2 30-60, P3 10-15, P4 <=10 min | 10-15 max, skip P4 |
 | Primary guide | ORCHESTRATION.md + AGENTS.md | prioritization.md |
 
 # NEXT STEPS

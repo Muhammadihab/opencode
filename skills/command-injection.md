@@ -1,44 +1,50 @@
 ---
 name: command-injection
-description: Injection skill for: Command Injection.
+description: Test inputs reaching OS commands for command injection / RCE — blind and in-band.
 category: injection
 triggers: ["command injection", "rce", "os command", "shell", "exec", "code execution"]
-status: stub
+status: active
 ---
 
-# Command Injection
+# Command Injection / RCE
 
-> **STUB** — structured placeholder so the resolver loads a real file for this
-> surface. Replace the TODO sections with concrete technique. Keep the
-> frontmatter `triggers` in sync with `runtime/registry.json`.
+Input flowing into an OS command (ping/DNS tools, file converters, PDF/image
+pipelines, git/archive ops, admin utilities). Highest-impact class — so prove it
+**safely**: a harmless delay or OOB callback, **never** a destructive command,
+reverse shell, or file deletion on a live target.
 
-## When this triggers
-Surfaces matching: `command injection`, `rce`, `os command`, `shell`, `exec`, `code execution`
+## Attack model
+- **Asset:** the server itself — full RCE.
+- **Authority decision:** should this input become part of a shell command? Never.
+- **Attacker input:** params feeding tools that shell out — hostnames, filenames, URLs, options, format strings.
+- **Smallest safe proof:** a controlled time delay you set, OR an OOB DNS/HTTP callback with a unique marker. No output exfiltration beyond proving execution.
 
-## Attack model (fill before testing)
-- **Asset / value at stake:** TODO
-- **Authority decision the server must enforce:** TODO
-- **Attacker-controlled inputs:** TODO
-- **Expected proof (smallest safe request/callback):** TODO
+## Technique ladder (safe)
+1. **Separators:** `;`, `|`, `&`, `&&`, `||`, newline, backticks `` ` ``, `$(...)`, `%0a`.
+   Probe: `127.0.0.1; <cmd>`, `127.0.0.1 | <cmd>`, `$(<cmd>)`.
+2. **Blind time-based (preferred):** `; sleep 5`, `| sleep 5`, `$(sleep 5)`; Windows `& timeout 5` / `ping -n 5 127.0.0.1`. Confirm with 2-3 samples vs baseline (timing needs a clean baseline).
+3. **OOB (preferred when no output):** `; nslookup <marker>.<collab>` / `; curl http://<marker>.<collab>/` — use ONLY the user-provided Collaborator (see `blind-vuln`). Unique marker per test.
+4. **In-band:** only a harmless command whose output appears (`id`, `whoami`, `hostname`) to confirm — one command, no further enumeration on a live target.
 
-## Core test checklist
-- [ ] Establish baseline (raw request + response) and save under `requests/` `responses/`.
-- [ ] Apply the primary technique for this class (TODO: list the concrete payload families).
-- [ ] Run the bypass ladder — change ONE variable at a time (identity/state, method/path,
-      parser/content-type, headers, encoding, workflow order).
-- [ ] Response-diff baseline vs attack before claiming any signal.
-- [ ] Record every variant in the tested-variant ledger (surface, variant, result, reason, next).
+## Context variants
+- Argument injection (no separator needed): sneaking an extra flag into a tool (`--output`, `-o`, `--upload-file`) — often missed, often safer to trigger.
+- Quote context: break out of `'...'` / `"..."` wrapping the input.
+- Filter bypass: `$IFS` for spaces, concatenation, globbing, encoding, env-var tricks.
 
-## FP traps for this class
-- TODO: the common ways this class produces false positives (generic errors, redirects,
-  client-side-only reflections, WAF pages). Check `memory/FALSE_POSITIVE_DB.md`.
+## Chain targets
+RCE is terminal — but even a confirmed blind callback proves it. Argument injection →
+file write/read → escalation. SSTI and deserialization are sibling RCE classes (see `ssti`).
 
-## Promotion criteria
-- OBSERVATION → LEAD: reproducible 2x.
-- LEAD → CONFIRMED: server-side effect proven, impact defined.
-- See `AGENTS.md` EXPLOITABILITY GATES for the full state machine.
+## FP traps
+- **Timing noise** — jitter mimics a delay; require multiple samples + baseline, use a clear delay (5s).
+- Collaborator hit from your own machine/scanner ≠ proof — target egress only.
+- A reflected error containing a path ≠ injection.
+- "It errored" ≠ it executed — need the delay/callback.
+
+## Promotion / proof
+- CONFIRMED: controlled delay reproduced 2x, OR OOB callback with your marker from the target, raw request saved. Stop at proof — do not run further commands.
+- Severity: confirmed RCE = P1 (Critical). Blind-DNS-only command exec still P1 when the callback is the target's and reproducible.
 
 ## References
-- Foundation: `skills/master-bugbounty-rules.md`
-- Signal engine: `prioritization.md`
-- Vuln-class memory: `memory/targets/<vuln>.md` (read first if present)
+`ssti`, `blind-vuln`, `waf-bypass`, `file-upload` (converter backends),
+`exploit-chain-analysis`; memory first. Review program rules before any OS-command proof.

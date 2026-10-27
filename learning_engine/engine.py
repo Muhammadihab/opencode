@@ -49,15 +49,37 @@ class LearningEngine:
         techs = techs or []
         return {"target": target, "techs": techs, "recommendations": ["scope_lock", "js_analysis"], "ok": True}
 
-    def during_testing(self, signals=None):
+    def during_testing(self, signals=None, context=None):
+        """Score discovered signals. `signals` = {signal_name: value(0-1)}.
+        `context` = optional list/dict of escalation flags (cross_tenant,
+        admin_bypass, auth_bypass, payment_impact, state_changing,
+        sensitive_data, chainable) that multiply the score up. Score is
+        bounded 0-1. Priority: P1 >= p1 threshold, P2 >= p2, else P3."""
         signals = signals or {}
-        score = 0.0
         weights = self.signals.get("weights", {})
+        escal = self.signals.get("escalation", {})
+        thresholds = self.signals.get("thresholds", {})
+
+        score = 0.0
         for k, v in signals.items():
             if k in weights and isinstance(v, (int, float)):
                 score += min(1.0, v) * weights[k]
-        score = min(1.0, score)
-        return {"score": round(score, 3), "priority": "P1" if score >= self.signals.get("thresholds", {}).get("p1", 0.8) else "P2", "ok": True}
+
+        # apply escalation multipliers from context flags
+        flags = []
+        if isinstance(context, dict):
+            flags = [k for k, v in context.items() if v]
+        elif isinstance(context, (list, tuple, set)):
+            flags = list(context)
+        for f in flags:
+            if f in escal:
+                score *= escal[f]
+
+        score = min(1.0, round(score, 3))
+        p1 = thresholds.get("p1", 0.8)
+        p2 = thresholds.get("p2", 0.5)
+        priority = "P1" if score >= p1 else "P2" if score >= p2 else "P3"
+        return {"score": score, "priority": priority, "escalated_by": flags, "ok": True}
 
     def after_finding(self, target, endpoint, vulnerability_class, signals=None, validation_state="LEAD", source_provenance=None):
         signals = signals or {}

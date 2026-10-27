@@ -111,7 +111,13 @@
 - **P3 examples.** P3 (medium): internal versions, stack traces, debug endpoints, hostnames, GraphQL schema, source maps, env leaks; weak CORS, missing CSP, cache-poisoning potential, open redirects for chains, insecure cookies, weak rate limits; reflected XSS without execution, SSTI hints, blind SSRF hints, SQL error leakage, HTML injection, XML anomalies; hidden APIs, unused endpoints, legacy versions, staging, admin routes, mobile backends, webhooks.
 - **P4 examples.** P4 (low): missing headers, clickjacking, verbose errors, OPTIONS/TRACE, public keys/JWKS, robots.txt, public source maps; self-XSS, reflection only, dead JS.
 - **Rules.** Automatic escalation when crossing tenants/admin/support or changing server-side state or chaining into high impact; automatic deprioritization for unrealistic interaction, browser-specific/unreliable, no server-side impact; chain boost for low/medium → ATO/cross-tenant/data exposure/RCE/payment abuse.
-- **Time allocation.** Time allocation: critical 60-120 min; medium-confidence 20-45 min; low/noisy 10-20 min; scanner-only validate quickly or discard.
+- **Time allocation (CANONICAL — all other files defer here).** Per-surface time budget keyed to priority, not a flat number:
+  - **P1 / critical (confirmed-impact path):** 60–120 min — exhaust bypass families.
+  - **P2 / high:** 30–60 min.
+  - **P3 / medium (chainable-but-unproven):** time-box 10–15 min, then defer.
+  - **P4 / low / noisy:** validate quickly (≤10 min) or discard; don't load skills.
+  - **Scanner-only:** validate fast or drop.
+  AGENTS.md circuit-breakers (tool-call cap, 403/429 backoff, no-progress, session guard) apply on top of these. BOOT stays < 5 min regardless.
 - **Confidence.** Confidence classification: Confirmed Vulnerability / High-Confidence Lead / Medium-Confidence Hypothesis / Low-Confidence Noise / Informational.
 - **Core principle.** Core principle: the best findings involve Identity, Authorization, Trust boundaries, Backend authority. Always ask: "As an attacker, can I access or control something belonging to another user, role, tenant, or system?"
 
