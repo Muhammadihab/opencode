@@ -47,7 +47,9 @@ Notes-first: document under `testing/<root-domain>/<subdomain>/notes/` as you go
 
 # FP GATE (hard pre-report gate)
 
-- **Hash check first.** Before promoting OBSERVATION → LEAD: signature-hash `SHA256(status:body-length:body-substring)[:8]` checked against `memory/FALSE_POSITIVE_DB.md`. On match: auto-downgrade to INFORMATIONAL, increment hit-count, stop. On miss: run FP filter; if FP, add new entry to the DB.
+- **Hash check first (run the tool, never compute it in your head).** Before promoting OBSERVATION → LEAD, save the response body to a file and run:
+  `python scripts/fp_check.py check --status <code> --body-file <path>`.
+  Exit 0 + `MATCH` = known false positive → auto-downgrade to INFORMATIONAL, stop (the tool increments the hit-count). Exit 10 + `MISS` = run the FP filter; if it is an FP, record it with `python scripts/fp_check.py add --status <code> --body-file <path> --pattern "<label>" --notes "<why>"`. The signature is `SHA256(status:normalized-body-fragment)[:8]`, computed by the tool so volatile tokens/timestamps do not change it.
 - **10-question gate.** Before reporting ANY finding: paste and answer the 10-question FP checklist verbatim (replay 2x, server-side effect, FP-DB hash, exploit chain, real impact, leverageable, no OOS dependency, 2+ accounts/roles/tenants, raw PoC, severity per prioritization.md). ANY "NO" → downgrade to LEAD/OBSERVATION. Never report.
 - **Strength verification.** After CONFIRMED, before report: run the Findings Strength Verification checklist (real impact, exploitability, leverageability, proof quality, cross-context). Reportable only if ALL pass.
 

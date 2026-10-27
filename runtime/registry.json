@@ -1,3 +1,1020 @@
 {
-  "skills": {}
+  "version": "1.0",
+  "updated": "2026-10-27",
+  "description": "Canonical skill + agent registry. Source of truth for scripts/skill_registry.py.",
+  "foundation_order": [
+    "master-bugbounty-rules",
+    "learning-engine-integration"
+  ],
+  "skills": {
+    "master-bugbounty-rules": {
+      "category": "foundation",
+      "triggers": [
+        "*always*"
+      ],
+      "path": "skills/master-bugbounty-rules.md",
+      "load_order": 0,
+      "foundation": true,
+      "modes": []
+    },
+    "learning-engine-integration": {
+      "category": "foundation",
+      "triggers": [
+        "*always*"
+      ],
+      "path": ".agents/skills/learning-engine-integration/SKILL.md",
+      "load_order": 1,
+      "foundation": true,
+      "modes": []
+    },
+    "recon-workflow": {
+      "category": "recon",
+      "triggers": [
+        "recon",
+        "subdomain",
+        "enumerate",
+        "discovery",
+        "asset",
+        "dns",
+        "host"
+      ],
+      "path": "skills/recon-workflow.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "tech-fingerprint": {
+      "category": "recon",
+      "triggers": [
+        "fingerprint",
+        "tech stack",
+        "technology",
+        "framework",
+        "server header",
+        "waf",
+        "cdn"
+      ],
+      "path": "skills/tech-fingerprint.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "endpoint-triage": {
+      "category": "recon",
+      "triggers": [
+        "endpoint",
+        "url",
+        "route",
+        "path discovery",
+        "sitemap"
+      ],
+      "path": "skills/endpoint-triage.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "fuzzing": {
+      "category": "recon",
+      "triggers": [
+        "fuzz",
+        "wordlist",
+        "bruteforce path",
+        "hidden endpoint",
+        "directory",
+        "ffuf"
+      ],
+      "path": "skills/fuzzing.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "dorking-and-osint-discovery": {
+      "category": "recon",
+      "triggers": [
+        "dork",
+        "osint",
+        "google",
+        "github search",
+        "shodan",
+        "leak search"
+      ],
+      "path": "skills/dorking-and-osint-discovery.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "offensive-osint": {
+      "category": "recon",
+      "triggers": [
+        "osint",
+        "exposed secret",
+        "public source",
+        "crt.sh",
+        "wayback",
+        "urlscan"
+      ],
+      "path": "skills/offensive-osint.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "subdomain-takeover": {
+      "category": "recon",
+      "triggers": [
+        "subdomain takeover",
+        "dangling dns",
+        "cname",
+        "unclaimed"
+      ],
+      "path": "skills/subdomain-takeover.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "js-deep-analysis": {
+      "category": "recon",
+      "triggers": [
+        "js",
+        "javascript",
+        "bundle",
+        "source map",
+        "sourcemap",
+        "client route",
+        "webpack"
+      ],
+      "path": "skills/js-deep-analysis.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "js-secret-and-api-review": {
+      "category": "recon",
+      "triggers": [
+        "js secret",
+        "api key in js",
+        "hardcoded",
+        "token in bundle",
+        "client id"
+      ],
+      "path": "skills/js-secret-and-api-review.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "api-security": {
+      "category": "api",
+      "triggers": [
+        "api",
+        "rest",
+        "json body",
+        "endpoint method",
+        "swagger",
+        "openapi"
+      ],
+      "path": "skills/api-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "graphql-security": {
+      "category": "api",
+      "triggers": [
+        "graphql",
+        "introspection",
+        "mutation",
+        "query resolver",
+        "gql"
+      ],
+      "path": "skills/graphql-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "request-response-analyzer": {
+      "category": "api",
+      "triggers": [
+        "request",
+        "response",
+        "status diff",
+        "body diff",
+        "header analysis"
+      ],
+      "path": "skills/request-response-analyzer.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "parameter-pollution": {
+      "category": "api",
+      "triggers": [
+        "parameter",
+        "param pollution",
+        "duplicate key",
+        "hpp",
+        "coercion",
+        "type confusion"
+      ],
+      "path": "skills/parameter-pollution.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "auth-bypass": {
+      "category": "auth",
+      "triggers": [
+        "login",
+        "auth",
+        "authentication",
+        "signin",
+        "sign in",
+        "register",
+        "signup",
+        "bypass"
+      ],
+      "path": "skills/auth-bypass.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "session-management": {
+      "category": "auth",
+      "triggers": [
+        "session",
+        "cookie",
+        "session fixation",
+        "logout",
+        "session token"
+      ],
+      "path": "skills/session-management.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "oauth-oidc-security": {
+      "category": "auth",
+      "triggers": [
+        "oauth",
+        "oidc",
+        "redirect_uri",
+        "state param",
+        "openid",
+        "sso token"
+      ],
+      "path": "skills/oauth-oidc-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "saml-security": {
+      "category": "auth",
+      "triggers": [
+        "saml",
+        "samlrequest",
+        "samlresponse",
+        "acs",
+        "assertion"
+      ],
+      "path": "skills/saml-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "jwt-security": {
+      "category": "auth",
+      "triggers": [
+        "jwt",
+        "json web token",
+        "alg none",
+        "kid",
+        "bearer token"
+      ],
+      "path": "skills/jwt-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "rate-limiting": {
+      "category": "auth",
+      "triggers": [
+        "rate limit",
+        "otp",
+        "2fa",
+        "mfa",
+        "totp",
+        "brute",
+        "resend code"
+      ],
+      "path": "skills/rate-limiting.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "forgot-password": {
+      "category": "auth",
+      "triggers": [
+        "forgot password",
+        "reset password",
+        "password reset",
+        "reset",
+        "magic link",
+        "recovery",
+        "reset token"
+      ],
+      "path": "skills/forgot-password.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "owned-account": {
+      "category": "auth",
+      "triggers": [
+        "owned account",
+        "login.md",
+        "email verification",
+        "invite",
+        "inbox"
+      ],
+      "path": "skills/owned-account.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "idor": {
+      "category": "authz",
+      "triggers": [
+        "idor",
+        "object id",
+        "user_id",
+        "uid",
+        "numeric id",
+        "uuid",
+        "bola",
+        "ownership"
+      ],
+      "path": "skills/idor.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "access-control-testing": {
+      "category": "authz",
+      "triggers": [
+        "authz",
+        "access control",
+        "acl",
+        "bfla",
+        "function level",
+        "permission"
+      ],
+      "path": "skills/access-control-testing.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "privilege-escalation": {
+      "category": "authz",
+      "triggers": [
+        "privilege escalation",
+        "privesc",
+        "admin",
+        "role",
+        "rbac",
+        "support action",
+        "vertical",
+        "horizontal"
+      ],
+      "path": "skills/privilege-escalation.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "business-context-analysis": {
+      "category": "authz",
+      "triggers": [
+        "tenant",
+        "org_id",
+        "multi-tenant",
+        "cross-tenant",
+        "account_id",
+        "isolation"
+      ],
+      "path": "skills/business-context-analysis.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "xss": {
+      "category": "client",
+      "triggers": [
+        "xss",
+        "reflected",
+        "stored xss",
+        "script injection",
+        "html injection",
+        "innerhtml"
+      ],
+      "path": "skills/xss.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "dom-xss": {
+      "category": "client",
+      "triggers": [
+        "dom xss",
+        "dom-based",
+        "sink",
+        "postmessage",
+        "location.hash",
+        "document.write"
+      ],
+      "path": "skills/dom-xss.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "content-security": {
+      "category": "client",
+      "triggers": [
+        "csp",
+        "content security policy",
+        "markdown",
+        "rich text",
+        "sanitizer bypass"
+      ],
+      "path": "skills/content-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "client-side-security": {
+      "category": "client",
+      "triggers": [
+        "prototype pollution",
+        "clickjacking",
+        "client-side",
+        "frontend"
+      ],
+      "path": "skills/client-side-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "sql-injection": {
+      "category": "injection",
+      "triggers": [
+        "sqli",
+        "sql injection",
+        "union",
+        "blind sql",
+        "error-based",
+        "stacked query"
+      ],
+      "path": "skills/sql-injection.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "ssti": {
+      "category": "injection",
+      "triggers": [
+        "ssti",
+        "template injection",
+        "jinja",
+        "twig",
+        "freemarker",
+        "velocity"
+      ],
+      "path": "skills/ssti.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "ssrf": {
+      "category": "injection",
+      "triggers": [
+        "ssrf",
+        "url fetch",
+        "webhook",
+        "redirect",
+        "callback",
+        "import url",
+        "fetcher",
+        "metadata"
+      ],
+      "path": "skills/ssrf.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "xxe": {
+      "category": "injection",
+      "triggers": [
+        "xxe",
+        "xml external entity",
+        "xml parser",
+        "doctype",
+        "svg upload"
+      ],
+      "path": "skills/xxe.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "command-injection": {
+      "category": "injection",
+      "triggers": [
+        "command injection",
+        "rce",
+        "os command",
+        "shell",
+        "exec",
+        "code execution"
+      ],
+      "path": "skills/command-injection.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "path-traversal": {
+      "category": "injection",
+      "triggers": [
+        "path traversal",
+        "lfi",
+        "directory traversal",
+        "../",
+        "file read",
+        "arbitrary read"
+      ],
+      "path": "skills/path-traversal.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "file-upload": {
+      "category": "injection",
+      "triggers": [
+        "upload",
+        "file upload",
+        "multipart",
+        "content-type",
+        "polyglot file",
+        "svg"
+      ],
+      "path": "skills/file-upload.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "database-security": {
+      "category": "injection",
+      "triggers": [
+        "nosql",
+        "ldap",
+        "xpath",
+        "injection",
+        "query language"
+      ],
+      "path": "skills/database-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "cors-misconfiguration": {
+      "category": "infra",
+      "triggers": [
+        "cors",
+        "access-control-allow-origin",
+        "cross-origin",
+        "wildcard origin"
+      ],
+      "path": "skills/cors-misconfiguration.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "cache-poisoning": {
+      "category": "infra",
+      "triggers": [
+        "cache",
+        "cache poisoning",
+        "web cache",
+        "x-forwarded",
+        "cache key"
+      ],
+      "path": "skills/cache-poisoning.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "host-header-injection": {
+      "category": "infra",
+      "triggers": [
+        "host header",
+        "host injection",
+        "x-forwarded-host",
+        "password reset host"
+      ],
+      "path": "skills/host-header-injection.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "http-smuggling": {
+      "category": "infra",
+      "triggers": [
+        "http smuggling",
+        "request smuggling",
+        "transfer-encoding",
+        "content-length",
+        "chunked"
+      ],
+      "path": "skills/http-smuggling.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "waf-bypass": {
+      "category": "infra",
+      "triggers": [
+        "waf",
+        "filter bypass",
+        "encoding bypass",
+        "blocked",
+        "403 waf"
+      ],
+      "path": "skills/waf-bypass.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "infrastructure-security": {
+      "category": "infra",
+      "triggers": [
+        "infrastructure",
+        "vpn",
+        "vcenter",
+        "sharepoint",
+        "appliance",
+        "ntlm",
+        "port"
+      ],
+      "path": "skills/infrastructure-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "websocket-security": {
+      "category": "realtime",
+      "triggers": [
+        "websocket",
+        "ws",
+        "wss",
+        "socket.io",
+        "realtime channel"
+      ],
+      "path": "skills/websocket-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "race-conditions": {
+      "category": "realtime",
+      "triggers": [
+        "race condition",
+        "race",
+        " toctou",
+        "concurrent",
+        "double spend",
+        "parallel request"
+      ],
+      "path": "skills/race-conditions.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "business-logic": {
+      "category": "realtime",
+      "triggers": [
+        "business logic",
+        "workflow",
+        "coupon",
+        "discount",
+        "approval",
+        "quota",
+        "trial",
+        "credit"
+      ],
+      "path": "skills/business-logic.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "payments-security": {
+      "category": "realtime",
+      "triggers": [
+        "payment",
+        "checkout",
+        "price",
+        "invoice",
+        "billing",
+        "subscription",
+        "refund"
+      ],
+      "path": "skills/payments-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "cloud-security": {
+      "category": "cloud",
+      "triggers": [
+        "cloud",
+        "s3",
+        "bucket",
+        "iam",
+        "gcs",
+        "azure blob",
+        "signed url",
+        "presigned"
+      ],
+      "path": "skills/cloud-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "mobile-security": {
+      "category": "cloud",
+      "triggers": [
+        "mobile",
+        "apk",
+        "android",
+        "ios",
+        "mobile api"
+      ],
+      "path": "skills/mobile-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "ai-security": {
+      "category": "cloud",
+      "triggers": [
+        "llm",
+        "ai",
+        "prompt injection",
+        "model",
+        "chatbot",
+        "rag"
+      ],
+      "path": "skills/ai-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "prompt-injection": {
+      "category": "cloud",
+      "triggers": [
+        "prompt injection",
+        "jailbreak",
+        "system prompt",
+        "llm abuse"
+      ],
+      "path": "skills/prompt-injection.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "web3-security": {
+      "category": "cloud",
+      "triggers": [
+        "web3",
+        "smart contract",
+        "solidity",
+        "blockchain",
+        "wallet"
+      ],
+      "path": "skills/web3-security.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "blind-vuln": {
+      "category": "oob",
+      "triggers": [
+        "blind",
+        "oob",
+        "out of band",
+        "collaborator",
+        "dns callback",
+        "delayed"
+      ],
+      "path": "skills/blind-vuln.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "exploit-chain-analysis": {
+      "category": "chain",
+      "triggers": [
+        "chain",
+        "exploit chain",
+        "pivot",
+        "escalate",
+        "combine"
+      ],
+      "path": "skills/exploit-chain-analysis.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "response-diff-analysis": {
+      "category": "validation",
+      "triggers": [
+        "response diff",
+        "baseline diff",
+        "signal score",
+        "diff"
+      ],
+      "path": "skills/response-diff-analysis.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "false-positive-filter": {
+      "category": "validation",
+      "triggers": [
+        "false positive",
+        "fp",
+        "validate finding",
+        "fp filter"
+      ],
+      "path": "skills/false-positive-filter.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "evidence-validation-and-severity-calibration": {
+      "category": "validation",
+      "triggers": [
+        "severity",
+        "calibration",
+        "evidence validation",
+        "cvss"
+      ],
+      "path": "skills/evidence-validation-and-severity-calibration.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "evidence-hygiene": {
+      "category": "validation",
+      "triggers": [
+        "evidence",
+        "redact",
+        "hygiene",
+        "poc hygiene"
+      ],
+      "path": "skills/evidence-hygiene.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "structured-summary-reporting": {
+      "category": "reporting",
+      "triggers": [
+        "summary",
+        "structured summary",
+        "session report"
+      ],
+      "path": "skills/structured-summary-reporting.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "report-writer": {
+      "category": "reporting",
+      "triggers": [
+        "report",
+        "write report",
+        "writeup",
+        "finding report"
+      ],
+      "path": "skills/report-writer.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "bugcrowd-reporting": {
+      "category": "reporting",
+      "triggers": [
+        "bugcrowd",
+        "bugcrowd report",
+        "submission"
+      ],
+      "path": "skills/bugcrowd-reporting.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    },
+    "redteam-report-template": {
+      "category": "reporting",
+      "triggers": [
+        "redteam",
+        "red team",
+        "client deliverable",
+        "pentest report"
+      ],
+      "path": "skills/redteam-report-template.md",
+      "load_order": 10,
+      "foundation": false,
+      "modes": []
+    }
+  },
+  "agents": {
+    "recon-agent": {
+      "role": "Passive+active recon: subdomains, URLs, tech fingerprint, DNS, ports, HTTP probes, WAF/CDN detection",
+      "skills": [
+        "recon-workflow",
+        "tech-fingerprint",
+        "endpoint-triage",
+        "subdomain-takeover"
+      ],
+      "tools": [
+        "read",
+        "glob",
+        "grep",
+        "web_search",
+        "bash"
+      ],
+      "max_spawns": 2,
+      "timeout_min": 10
+    },
+    "dorking-agent": {
+      "role": "Passive OSINT across public sources (no target contact)",
+      "skills": [
+        "dorking-and-osint-discovery",
+        "offensive-osint"
+      ],
+      "tools": [
+        "read",
+        "glob",
+        "grep",
+        "web_search",
+        "bash"
+      ],
+      "max_spawns": 2,
+      "timeout_min": 5
+    },
+    "js-agent": {
+      "role": "JS bundle + source map analysis, auth-aware",
+      "skills": [
+        "js-deep-analysis",
+        "js-secret-and-api-review"
+      ],
+      "tools": [
+        "read",
+        "glob",
+        "grep",
+        "web_search",
+        "bash",
+        "chrome"
+      ],
+      "max_spawns": 4,
+      "timeout_min": 5
+    },
+    "fuzzing-agent": {
+      "role": "Tech-aware endpoint/param fuzzing, WAF-gated by recon-agent",
+      "skills": [
+        "fuzzing",
+        "endpoint-triage",
+        "waf-bypass"
+      ],
+      "tools": [
+        "read",
+        "write",
+        "glob",
+        "bash"
+      ],
+      "max_spawns": 6,
+      "timeout_min": 5
+    },
+    "understand-agent": {
+      "role": "Auth-first browse + app mapping, delivers live session, NO testing",
+      "skills": [
+        "business-context-analysis",
+        "recon-workflow"
+      ],
+      "tools": [
+        "read",
+        "glob",
+        "grep",
+        "web_search",
+        "bash",
+        "chrome"
+      ],
+      "max_spawns": 2,
+      "timeout_min": 10
+    }
+  }
 }

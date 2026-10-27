@@ -16,4 +16,14 @@ jobs:
       - name: Run tests
         run: python -m pytest scripts/ learning_engine/tests/ tests/ -v
       - name: Registry contract check
-        run: python scripts/skill_registry.py check
+        run: |
+          python scripts/skill_registry.py check
+          python - <<'PY'
+          import json, subprocess, sys
+          out = subprocess.check_output([sys.executable, "scripts/skill_registry.py", "check"])
+          d = json.loads(out)
+          assert d["skills"] > 0, "registry.json is empty"
+          assert d["agents"] == 5, "expected 5 sub-agents"
+          assert d["missing_files"] == 0, f"missing skill files: {d['missing']}"
+          print("registry OK:", d["skills"], "skills, 0 missing")
+          PY
